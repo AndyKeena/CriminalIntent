@@ -1,5 +1,6 @@
 package uk.ac.wlv.criminalintent;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,11 +22,16 @@ public class CrimeFragment extends Fragment {
     private EditText mTitleField;
     Button mDateButton;
     CheckBox mSolvedCheckBox;
+    private SharedPreferences mSharedPreferences;
+
+    private static final String PREFS_NAME = "CrimeFragmentPrefs";
+    private static final String  LAST_ENTERED_TEXT_KEY = "lastEnteredText";
 
     @Override
     public void onCreate(Bundle saveInstanceState){
         super.onCreate(saveInstanceState);
         mCrime = new Crime();
+        mSharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 //    public void onCreate(Bundle state){
 //        super.onCreate(state);
@@ -35,7 +41,11 @@ public class CrimeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
-        mTitleField = (EditText) v.findViewById(R.id.crime_title);
+        mTitleField = v.findViewById(R.id.crime_title);
+
+        String lastEnteredText = mSharedPreferences.getString(LAST_ENTERED_TEXT_KEY, "");
+        mTitleField.setText(lastEnteredText);
+
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -48,6 +58,7 @@ public class CrimeFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
+                saveLastEnteredText(s.toString());
             }
         });
         mDateButton = (Button) v.findViewById(R.id.crime_date);
@@ -65,6 +76,10 @@ public class CrimeFragment extends Fragment {
         });
         return v;
     }
-
+    private void saveLastEnteredText(String text){
+        SharedPreferences.Editor editor  = mSharedPreferences.edit();
+        editor.putString(LAST_ENTERED_TEXT_KEY, text);
+        editor.apply();
+    }
 
 }
