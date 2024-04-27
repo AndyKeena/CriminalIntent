@@ -16,6 +16,7 @@ import android.content.SharedPreferences;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 
 public class CrimeFragment extends Fragment {
     private Crime mCrime;
@@ -23,29 +24,29 @@ public class CrimeFragment extends Fragment {
     Button mDateButton;
     CheckBox mSolvedCheckBox;
     private SharedPreferences mSharedPreferences;
-
+    private static final String ARG_CRIME_ID ="crime_id";
     private static final String PREFS_NAME = "CrimeFragmentPrefs";
     private static final String  LAST_ENTERED_TEXT_KEY = "lastEnteredText";
 
+    public static CrimeFragment newInstance(UUID crime_id){
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_CRIME_ID, crime_id);
+        CrimeFragment fragment = new CrimeFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
     @Override
     public void onCreate(Bundle saveInstanceState){
         super.onCreate(saveInstanceState);
-        mCrime = new Crime();
-        mSharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
+        mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
     }
-//    public void onCreate(Bundle state){
-//        super.onCreate(state);
-//        mCrime = new Crime();
-//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
-        mTitleField = v.findViewById(R.id.crime_title);
-
-        String lastEnteredText = mSharedPreferences.getString(LAST_ENTERED_TEXT_KEY, "");
-        mTitleField.setText(lastEnteredText);
-
+        mTitleField = (EditText) v.findViewById(R.id.crime_title);
+        mTitleField.setText(mCrime.getTitle());
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -58,7 +59,6 @@ public class CrimeFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                saveLastEnteredText(s.toString());
             }
         });
         mDateButton = (Button) v.findViewById(R.id.crime_date);
@@ -68,6 +68,7 @@ public class CrimeFragment extends Fragment {
         mDateButton.setText(fomatDate);
         mDateButton.setEnabled(false);
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
+        mSolvedCheckBox.setChecked(mCrime.isSolved());
         mSolvedCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
@@ -76,10 +77,4 @@ public class CrimeFragment extends Fragment {
         });
         return v;
     }
-    private void saveLastEnteredText(String text){
-        SharedPreferences.Editor editor  = mSharedPreferences.edit();
-        editor.putString(LAST_ENTERED_TEXT_KEY, text);
-        editor.apply();
-    }
-
 }
